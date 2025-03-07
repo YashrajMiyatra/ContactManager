@@ -8,11 +8,26 @@ use App\Models\Contact;
 
 class ContactController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $contacts = Contact::where('user_id', Auth::id())->paginate(20);
-        return view('contacts.index', compact('contacts'));
+        $search = $request->input('search');
+        $sortBy = $request->input('sortBy', 'name');
+        $sortOrder = $request->input('sortOrder', 'asc');
+
+        $contacts = Contact::where('user_id', Auth::id())
+            ->when($search, function ($query, $search) {
+                return $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sortBy, $sortOrder)
+            ->paginate(20);
+
+        return view('contacts.index', compact('contacts', 'search', 'sortBy', 'sortOrder'));
     }
+
 
     public function create()
     {
@@ -64,5 +79,4 @@ class ContactController extends Controller
 
         return redirect()->route('contacts.index')->with('success', 'Contact deleted successfully!');
     }
-
 }

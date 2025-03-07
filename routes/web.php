@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
 
 Route::get('/', function () {
     return Auth::check() ? redirect()->route('contacts.index') : redirect()->route('auth');
@@ -11,6 +13,26 @@ Route::get('/', function () {
 Route::get('/auth', function () {
     return view('auth.auth');
 })->name('auth');
+
+Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])
+    ->middleware('guest')
+    ->name('password.request');
+
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
+    ->middleware('guest')
+    ->name('password.email');
+
+Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
+    ->middleware('guest')
+    ->name('password.reset');
+
+Route::post('/reset-password', [NewPasswordController::class, 'store'])
+    ->middleware('guest')
+    ->name('password.update');
+
+// Route::post('/login', [AuthenticatedSessionController::class, 'store'])
+//     ->middleware('guest')
+//     ->name('login');
 
 Route::post('/login', function () {
     $credentials = request()->validate([
